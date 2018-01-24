@@ -23,6 +23,8 @@ num_epochs = 10
 cuda = False
 store_every = 1000
 lr0 = 0.02
+model_type = 'MLP'
+#model_type = 'CNN'
 
 mnist_transforms = torchvision.transforms.Compose(
         [torchvision.transforms.ToTensor()])
@@ -60,15 +62,36 @@ class ResLinear(nn.Module):
         else:
             skip = x
         return inner + skip
+
+
+class Flatten(nn.Module):
+    def forward(self, x):
+        x = x.view(x.size()[0], -1)
+        return x
+
+
+if model_type == 'MLP':        
+    model = nn.Sequential(
+        ResLinear(784, 312),
+        nn.ReLU(),
+        ResLinear(312, 312),
+        nn.ReLU(),
+        ResLinear(312, 10)
+    )
+elif model_type == 'CNN':
+    model = nn.Sequential(
+        nn.Conv2d(1, 16, 5),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(16, 16, 5),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        Flatten(),
+        ResLinear(256, 100),
+        nn.ReLU(),
+        ResLinear(100, 10)
+    )
         
-        
-model = nn.Sequential(
-    ResLinear(784, 312),
-    nn.ReLU(),
-    ResLinear(312, 312),
-    nn.ReLU(),
-    ResLinear(312, 10)
-)
 if cuda:
     model = model.cuda()
 
@@ -94,8 +117,12 @@ def evaluate(dataset_loader, criterion):
         optimizer.zero_grad()
 
         x, y = batch
-        x = Variable(x).view(-1,784)
-        y = Variable(y).view(-1)
+        if model_type == 'MLP':
+            x = Variable(x).view(-1,784)
+            y = Variable(y).view(-1)
+        elif model_type == 'CNN':
+            x = Variable(x, volatile=True).view(-1,1,28,28)
+            y = Variable(y).view(-1)
         if cuda:
             x = x.cuda()
             y = y.cuda()
@@ -121,8 +148,12 @@ def train_model():
             optimizer.zero_grad()
 
             x, y = batch
-            x = Variable(x).view(-1,784)
-            y = Variable(y).view(-1)
+            if model_type == 'MLP':
+                x = Variable(x).view(-1,784)
+                y = Variable(y).view(-1)
+            elif model_type == 'CNN':
+                x = Variable(x).view(-1,1,28,28)
+                y = Variable(y).view(-1)
             if cuda:
                 x = x.cuda()
                 y = y.cuda()
