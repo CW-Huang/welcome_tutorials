@@ -1,2 +1,3 @@
-# welcome_tutorials
-Various tutorials given for welcoming new students at MILA.
+# Pytorch Tutorial
+pytorch tutorial given to IFT6135 Representation Learning class.
+
