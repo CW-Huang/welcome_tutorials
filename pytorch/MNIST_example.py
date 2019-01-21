@@ -7,6 +7,8 @@ Created on Mon Jan 15 13:47:03 2018
 """
 
 
+from __future__ import print_function
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,11 +22,15 @@ from_numpy = torch.from_numpy
 
 batch_size = 64
 num_epochs = 10
-cuda = False
+cuda = torch.cuda.is_available()
+if cuda:
+    print('cuda is available')
+else:
+    print('cuda is not available')
 store_every = 1000
 lr0 = 0.02
-model_type = 'MLP'
-#model_type = 'CNN'
+#model_type = 'MLP'
+model_type = 'CNN'
 
 mnist_transforms = torchvision.transforms.Compose(
         [torchvision.transforms.ToTensor()])
@@ -66,7 +72,7 @@ class ResLinear(nn.Module):
 
 class Flatten(nn.Module):
     def forward(self, x):
-        x = x.view(x.size()[0], -1)
+        x = x.view(x.size(0), -1)
         return x
 
 
@@ -103,6 +109,7 @@ def adjust_lr(optimizer, epoch, total_epochs):
     lr = lr0 * (0.1 ** (epoch / float(total_epochs)))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
+# `torch.optim.lr_scheduler` can be your good friend
 
 
 def accuracy(proba, y):
@@ -118,11 +125,11 @@ def evaluate(dataset_loader, criterion):
 
         x, y = batch
         if model_type == 'MLP':
-            x = Variable(x).view(-1,784)
-            y = Variable(y).view(-1)
+            x = x.view(-1,784)
+            y = y.view(-1)
         elif model_type == 'CNN':
-            x = Variable(x, volatile=True).view(-1,1,28,28)
-            y = Variable(y).view(-1)
+            x = x.view(-1,1,28,28)
+            y = y.view(-1)
         if cuda:
             x = x.cuda()
             y = y.cuda()
@@ -149,11 +156,11 @@ def train_model():
 
             x, y = batch
             if model_type == 'MLP':
-                x = Variable(x).view(-1,784)
-                y = Variable(y).view(-1)
+                x = x.view(-1,784)
+                y = y.view(-1)
             elif model_type == 'CNN':
-                x = Variable(x).view(-1,1,28,28)
-                y = Variable(y).view(-1)
+                x = x.view(-1,1,28,28)
+                y = y.view(-1)
             if cuda:
                 x = x.cuda()
                 y = y.cuda()
